@@ -1,0 +1,51 @@
+int main(int argc,char*argv[])
+{
+  arg_parse(argc,argv);
+  if(!old_h_option)
+  {
+    const char*head;
+    switch(ps_format)
+    {
+      default:/*can't happen*/
+      case 0:	head=" PID TTY TIME CMD";break;
+      ......
+      case '1'|0x80;head="F UID PID PPID PRI NI VSZ RSS WCHAN S TTY
+       TIME COMMAND";break;
+    }
+    printf("%s\n",head);
+  }
+  if(want_one_pid)
+  {
+    if(stat2proc(want_one_pid))print_proc();
+    else exit(1);
+  }
+  else
+  {
+    struct dirent*ent;
+    DIR*dir;
+    int ouruid;
+    int found_a_proc;
+    found_a_proc=0;
+    ouruid=getuid();
+    dir=opendir("/proc");
+    while((ent=readdir(dir)))
+    {
+      if(*ent->d_name<'0'||*ent->d_name>'9')continue;
+      if(!stat2proc(atoi(ent->d_name)))continue;
+      if(want_one_command)
+      {
+        if(strcmp(want_one_command,P_cmd))continue;
+      }
+      else
+      {
+        if(!select_notty&&P_tty_num==NO_TTY_VALUE)continue;
+        if(!select_all&&P_euid!=ouruid)continue;
+      }
+      found_a_proc++;
+      print_proc();
+    }
+    closedir(dir);
+    exit(!found_a_proc);
+  }
+  return0;
+}
