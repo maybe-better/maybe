@@ -1,0 +1,25 @@
+void__init proc_root_init(void)
+{
+    int err=proc_init_inodecache();
+    err=register_filesystem(&proc_fs_type);
+    proc_mnt=kern_mount(&proc_fs_type);
+    proc_misc_init();
+    proc_net=proc_mkdir("net",NULL);
+    proc_net_stat=proc_mkdir("net/stat",NULL);
+    proc_root_fs=proc_mkdir("fs",NULL);
+    proc_root_driver=proc_mkdir("driver",NULL);
+    proc_mkdir("fs/nfsd",NULL);
+    proc_bus=proc_mkdir("bus",NULL);
+    proc_sys_init();
+}
+static const struct file_operations proc_root_operations=
+{
+    .read             =generic_read_dir,
+    .readdir          =proc_root_readdir,
+
+};   
+static const struct inode_operations proc_root_inode_operations=
+{
+    .lookup           =proc_root_lookup,
+    .getattr          =proc_root_getattr, 
+};
