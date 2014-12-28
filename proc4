@@ -1,0 +1,31 @@
+static struct dentry*proc_root_lookup(struct inode*dir,struct dentry*dentry,struct nameidata*nd)
+{
+    if(!proc_lookup(dir,dentry,nd))
+    {
+        return NULL;
+    }
+    return proc_pid_lookup(dir,dentry,nd);
+}
+
+struct dentry*proc_pid_lookup(struct inode*dir,struct dentry*dentry,struct nameidata*nd)
+{
+    struct dentry*result=ERR_PTR(-ENOENT);
+    struct task_struct*task;
+    unsigned tgid;
+    result=proc_base_lookup(dir,dentry);
+    if(!IS_ERR(result)||PTR_ERR(result)!=-ENOENT)
+      goto out;
+    tigd=name_to_int(dentry);
+    rcu_read_lock();
+    task=find_task_by_pid(tgid);
+    if(task)
+        get_task_struct(task);
+    rcu_read_unlock();
+    if(!task)
+        goto out;
+    result=proc_pid_instantiate(dir,dentry,task,NULL);
+    put_task_struct(task);
+    out:
+    return result;
+}
+    
